@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Voice Sync – Auto English Dub</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050816;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    h1 {
+      font-size: 40px;
+      margin: 16px 0 8px;
+    }
+    .subtitle {
+      color: #9ca3af;
+      max-width: 520px;
+      margin: 0 auto;
+      font-size: 15px;
+    }
+    .card {
+      background: #0b1120;
+      border-radius: 18px;
+      padding: 24px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      margin-bottom: 24px;
+    }
+    .label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    input[type="url"] {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 15px;
+      outline: none;
+    }
+    input[type="url"]::placeholder {
+      color: #4b5563;
+    }
+    button {
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .status {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.6); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .progress-bar {
+      margin-top: 10px;
+      height: 6px;
+      border-radius: 999px;
+      background: #111827;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #a855f7);
+      transition: width 0.3s ease;
+    }
+    .video-card {
+      margin-top: 20px;
+    }
+    .video-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      font-size: 12px;
+    }
+    video {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid #1f2937;
+      background: black;
+    }
+    .error {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #f97373;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="logo">AI Voice Sync</div>
+      <h1>Turn any video into natural English in one click.</h1>
+      <p class="subtitle">
+        Paste a link, and we auto-dub it with AI voices—keeping timing, emotion, and flow.
+      </p>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="label">Video link</div>
+        <div class="input-row">
+          <input id="url" type="url" placeholder="Paste YouTube or video URL…" />
+          <button id="submitBtn" onclick="startJob()">Dub to English</button>
+        </div>
+
+        <div id="status" class="status" style="display:none;">
+          <span class="dot"></span>
+          <span id="statusText">Preparing your dub…</span>
+        </div>
+        <div class="progress-bar" id="progressBar" style="display:none;">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div id="error" class="error" style="display:none;"></div>
+
+        <div id="result" class="video-card" style="display:none;">
+          <div class="video-header">
+            <span>Dubbed in English</span>
+            <span class="pill">Original audio → AI voice</span>
+          </div>
+          <video id="dubVideo" controls></video>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const BACKEND_URL = "https://your-backend.example.com/dub";
+
+    async function startJob() {
+      const url = document.getElementById('url').value.trim();
+      const btn = document.getElementById('submitBtn');
+      const status = document.getElementById('status');
+      const statusText = document.getElementById('statusText');
+      const progressBar = document.getElementById('progressBar');
+      const progressFill = document.getElementById('progressFill');
+      const result = document.getElementById('result');
+      const videoEl = document.getElementById('dubVideo');
+      const errorEl = document.getElementById('error');
+
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+
+      if (!url) {
+        errorEl.textContent = 'Paste a video link first.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      status.style.display = 'flex';
+      progressBar.style.display = 'block';
+      result.style.display = 'none';
+      progressFill.style.width = '0%';
+      statusText.textContent = 'Queuing your dub…';
+
+      try {
+        const res = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!res.ok) throw new Error('Backend error: ' + res.status);
+
+        const data = await res.json();
+
+        if (data.dubbedUrl) {
+          statusText.textContent = 'Done. Loading your dubbed video…';
+          progressFill.style.width = '100%';
+          videoEl.src = data.dubbedUrl;
+          result.style.display = 'block';
+          status.style.display = 'none';
+          progressBar.style.display = 'none';
+          btn.disabled = false;
+        } else {
+          throw new Error('Unexpected response from backend.');
+        }
+      } catch (e) {
+        errorEl.textContent = 'Something went wrong: ' + e.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        status.style.display = 'none';
+        progressBar.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
